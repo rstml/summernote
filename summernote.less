@@ -10,30 +10,6 @@
 .note-editor {
   border: 1px solid @border-color;
 
-  /* fullscreen mode */
-  &.fullscreen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 1050; /* bs3 modal-backdrop: 1030, bs2: 1040 */
-    .note-editable {
-      background-color: white;
-    }
-    .note-resizebar {
-      display: none;
-    }
-  }
-
-  &.codeview {
-    .note-editable {
-      display: none;
-    }
-    .note-codable {
-      display: block;
-    }
-  }
-  
   /* toolbar */
   .note-toolbar {
     padding-left: 5px;
@@ -319,7 +295,7 @@
   /* editable */
   .note-editable {
     padding: 10px;
-    overflow: scroll;
+    overflow: auto;
     outline: none;
   }
 

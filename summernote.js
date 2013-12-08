@@ -3,7 +3,7 @@
  * (c) 2013~ Alan Hong
  * summernote may be freely distributed under the MIT license./
  */
-(function ($, CodeMirror) {
+(function ($) {
   'use strict';
   /**
    * object which check platform/agent
@@ -11,8 +11,7 @@
   var agent = {
     bMac: navigator.appVersion.indexOf('Mac') > -1,
     bMSIE: navigator.userAgent.indexOf('MSIE') > -1,
-    bFF: navigator.userAgent.indexOf('Firefox') > -1,
-    bCodeMirror: !!CodeMirror
+    bFF: navigator.userAgent.indexOf('Firefox') > -1
   };
   
   /**
@@ -1018,23 +1017,6 @@
       var sKey = sEvent === 'backColor' ? 'background-color' : 'color';
       $recentColor.find('i').css(sKey, sValue);
     };
-
-    this.updateFullscreen = function ($toolbar, bFullscreen) {
-      var $btn = $toolbar.find('button[data-event="fullscreen"]');
-      $btn[bFullscreen ? 'addClass' : 'removeClass']('active');
-    };
-    this.updateCodeview = function ($toolbar, bCodeview) {
-      var $btn = $toolbar.find('button[data-event="codeview"]');
-      $btn[bCodeview ? 'addClass' : 'removeClass']('active');
-    };
-
-    this.enable = function ($toolbar) {
-      $toolbar.find('button').not('button[data-event="codeview"]').removeClass('disabled');
-    };
-
-    this.disable = function ($toolbar) {
-      $toolbar.find('button').not('button[data-event="codeview"]').addClass('disabled');
-    };
   };
   
   /**
@@ -1174,10 +1156,6 @@
         $linkDialog.off('shown.bs.modal hidden.bs.modal');
       }).modal('show');
     };
-
-    this.showHelpDialog = function ($dialog) {
-      $dialog.find('.note-help-dialog').modal('show');
-    };
   };
   
   /**
@@ -1240,8 +1218,6 @@
         editor.setLinkDialog(oLayoutInfo.editable(), function (linkInfo, cb) {
           dialog.showLinkDialog(oLayoutInfo.dialog(), linkInfo, cb);
         });
-      } else if (bCmd && keyCode === key.SLASH) {
-        dialog.showHelpDialog(oLayoutInfo.dialog());
       } else if (bCmd && bShift && keyCode === key.L) {
         editor.justifyLeft(oLayoutInfo.editable());
       } else if (bCmd && bShift && keyCode === key.E) {
@@ -1404,68 +1380,6 @@
             editor.restoreRange($editable);
             editor.insertImage($editable, sUrl);
           });
-        } else if (sEvent === 'showHelpDialog') {
-          dialog.showHelpDialog($dialog);
-        } else if (sEvent === 'fullscreen') {
-          $editor.toggleClass('fullscreen');
-
-          var hResizeFullscreen = function () {
-            var nHeight = $(window).height() - $toolbar.outerHeight();
-            $editable.css('height', nHeight);
-          };
-
-          var bFullscreen = $editor.hasClass('fullscreen');
-          if (bFullscreen) {
-            $editable.data('orgHeight', $editable.css('height'));
-            $(window).resize(hResizeFullscreen).trigger('resize');
-          } else {
-            var hasOptionHeight = !!$editable.data('optionHeight');
-            $editable.css('height', hasOptionHeight ? $editable.data('orgHeight') : 'auto');
-            $(window).off('resize');
-          }
-
-          toolbar.updateFullscreen($toolbar, bFullscreen);
-        } else if (sEvent === 'codeview') {
-          $editor.toggleClass('codeview');
-
-          var bCodeview = $editor.hasClass('codeview');
-          if (bCodeview) {
-            $codable.val($editable.html());
-            $codable.height($editable.height());
-            toolbar.disable($toolbar);
-            $codable.focus();
-
-            // activate CodeMirror as codable
-            if (agent.bCodeMirror) {
-              var cmEditor = CodeMirror.fromTextArea($codable[0], $.extend({
-                mode: 'text/html',
-                lineNumbers: true
-              }, $editor.data('options').codemirror));
-              // CodeMirror hasn't Padding.
-              cmEditor.setSize(null, $editable.outerHeight());
-              // autoFormatRange If formatting included
-              if (cmEditor.autoFormatRange) {
-                cmEditor.autoFormatRange({line: 0, ch: 0}, {
-                  line: cmEditor.lineCount(),
-                  ch: cmEditor.getTextArea().value.length
-                });
-              }
-              $codable.data('cmEditor', cmEditor);
-            }
-          } else {
-            // deactivate CodeMirror as codable
-            if (agent.bCodeMirror) {
-              $codable.data('cmEditor').toTextArea();
-            }
-
-            $editable.html($codable.val() || dom.emptyPara);
-            $editable.height($editable.data('optionHeight') ? $codable.height() : 'auto');
-
-            toolbar.enable($toolbar);
-            $editable.focus();
-          }
-
-          toolbar.updateCodeview(oLayoutInfo.toolbar(), bCodeview);
         }
 
         hToolbarAndPopoverUpdate(event);
@@ -1701,13 +1615,7 @@
         '<li><a data-event="lineHeight" data-value="1.8"><i class="fa fa-check icon-ok"></i> 1.8</a></li>' +
         '<li><a data-event="lineHeight" data-value="2.0"><i class="fa fa-check icon-ok"></i> 2.0</a></li>' +
         '<li><a data-event="lineHeight" data-value="3.0"><i class="fa fa-check icon-ok"></i> 3.0</a></li>' +
-        '</ul>',
-      help:
-        '<button type="button" class="btn btn-default btn-sm btn-small" title="Help" data-shortcut="Ctrl+/" data-mac-shortcut="⌘+/" data-event="showHelpDialog" tabindex="-1"><i class="fa fa-question icon-question"></i></button>',
-      fullscreen:
-        '<button type="button" class="btn btn-default btn-sm btn-small" title="Full Screen" data-event="fullscreen" tabindex="-1"><i class="fa fa-arrows-alt icon-fullscreen"></i></button>',
-      codeview:
-        '<button type="button" class="btn btn-default btn-sm btn-small" title="Code View" data-event="codeview" tabindex="-1"><i class="fa fa-code icon-code"></i></button>'
+        '</ul>'
     };
     var sPopover = '<div class="note-popover">' +
                      '<div class="note-link-popover popover bottom in" style="display: none;">' +
@@ -1747,74 +1655,6 @@
                       '<div class="note-control-selection-info"></div>' +
                     '</div>' +
                   '</div>';
-
-    var sShortcutText = '<table class="note-shortcut">' +
-                           '<thead>' +
-                             '<tr><th></th><th>Text formatting</th></tr>' +
-                           '</thead>' +
-                           '<tbody>' +
-                             '<tr><td>⌘ + B</td><td>Toggle Bold</td></tr>' +
-                             '<tr><td>⌘ + I</td><td>Toggle Italic</td></tr>' +
-                             '<tr><td>⌘ + U</td><td>Toggle Underline</td></tr>' +
-                             '<tr><td>⌘ + ⇧ + S</td><td>Toggle Strike</td></tr>' +
-                             '<tr><td>⌘ + \\</td><td>Remove Font Style</td></tr>' +
-                             '</tr>' +
-                           '</tbody>' +
-                         '</table>';
-
-    var sShortcutAction = '<table class="note-shortcut">' +
-                           '<thead>' +
-                             '<tr><th></th><th>Action</th></tr>' +
-                           '</thead>' +
-                           '<tbody>' +
-                             '<tr><td>⌘ + Z</td><td>Undo</td></tr>' +
-                             '<tr><td>⌘ + ⇧ + Z</td><td>Redo</td></tr>' +
-                             '<tr><td>⌘ + ]</td><td>Indent</td></tr>' +
-                             '<tr><td>⌘ + [</td><td>Outdent</td></tr>' +
-                             '<tr><td>⌘ + K</td><td>Insert Link</td></tr>' +
-                             '<tr><td>⌘ + ENTER</td><td>Insert Horizontal Rule</td></tr>' +
-                           '</tbody>' +
-                         '</table>';
-
-    var sShortcutPara = '<table class="note-shortcut">' +
-                          '<thead>' +
-                            '<tr><th></th><th>Paragraph formatting</th></tr>' +
-                          '</thead>' +
-                          '<tbody>' +
-                            '<tr><td>⌘ + ⇧ + L</td><td>Align Left</td></tr>' +
-                            '<tr><td>⌘ + ⇧ + E</td><td>Align Center</td></tr>' +
-                            '<tr><td>⌘ + ⇧ + R</td><td>Align Right</td></tr>' +
-                            '<tr><td>⌘ + ⇧ + J</td><td>Justify Full</td></tr>' +
-                            '<tr><td>⌘ + ⇧ + NUM7</td><td>Ordered List</td></tr>' +
-                            '<tr><td>⌘ + ⇧ + NUM8</td><td>Unordered List</td></tr>' +
-                          '</tbody>' +
-                        '</table>';
-
-    var sShortcutStyle = '<table class="note-shortcut">' +
-                           '<thead>' +
-                             '<tr><th></th><th>Document Style</th></tr>' +
-                           '</thead>' +
-                           '<tbody>' +
-                             '<tr><td>⌘ + NUM0</td><td>Normal Text</td></tr>' +
-                             '<tr><td>⌘ + NUM1</td><td>Heading 1</td></tr>' +
-                             '<tr><td>⌘ + NUM2</td><td>Heading 2</td></tr>' +
-                             '<tr><td>⌘ + NUM3</td><td>Heading 3</td></tr>' +
-                             '<tr><td>⌘ + NUM4</td><td>Heading 4</td></tr>' +
-                             '<tr><td>⌘ + NUM5</td><td>Heading 5</td></tr>' +
-                             '<tr><td>⌘ + NUM6</td><td>Heading 6</td></tr>' +
-                           '</tbody>' +
-                         '</table>';
-
-    var sShortcutTable = '<table class="note-shortcut-layout">' +
-                           '<tbody>' +
-                             '<tr><td>' + sShortcutAction + '</td><td>' + sShortcutText + '</td></tr>' +
-                             '<tr><td>' + sShortcutStyle + '</td><td>' + sShortcutPara + '</td></tr>' +
-                           '</tbody>' +
-                         '</table>';
-
-    if (!agent.bMac) { // shortcut modifier for windows
-      sShortcutTable = sShortcutTable.replace(/⌘/g, 'Ctrl').replace(/⇧/g, 'Shift');
-    }
 
     var sDialog = '<div class="note-dialog">' +
                     '<div class="note-image-dialog modal" aria-hidden="false">' +
@@ -1864,35 +1704,11 @@
                           '</div>' +
                         '</div>' +
                       '</div>' +
-                    '</div>' +
-                    '<div class="note-help-dialog modal" aria-hidden="false">' +
-                      '<div class="modal-dialog">' +
-                        '<div class="modal-content">' +
-                          '<div class="modal-body">' +
-                            '<div class="modal-background">' +
-                            '<a class="modal-close pull-right" aria-hidden="true" tabindex="-1">Close</a>' +
-                            '<div class="title">Keyboard shortcuts</div>' +
-                            sShortcutTable +
-                            '<p class="text-center"><a href="//hackerwins.github.io/summernote/" target="_blank">Summernote v0.4</a> · <a href="//github.com/HackerWins/summernote" target="_blank">Project</a> · <a href="//github.com/HackerWins/summernote/issues" target="_blank">Issues</a></p>' +
-                          '</div>' +
-                        '</div>' +
-                      '</div>' +
-                    '</div>' +
-                  '</div>';
+                    '</div>';
 
     var sStatusbar = '<div class="note-resizebar"><div class="note-icon-bar"></div><div class="note-icon-bar"></div><div class="note-icon-bar"></div></div>';
     /* jshint ignore:end */
-                        
-    // createTooltip
-    var createTooltip = function ($container, sPlacement) {
-      $container.find('button').each(function (i, elBtn) {
-        var $btn = $(elBtn);
-        var sShortcut = $btn.attr(agent.bMac ? 'data-mac-shortcut': 'data-shortcut');
-        if (sShortcut) { $btn.attr('title', function (i, v) { return v + ' (' + sShortcut + ')'; }); }
-      //bootstrap tooltip on btn-group bug: https://github.com/twitter/bootstrap/issues/5687
-      }).tooltip({container: 'body', placement: sPlacement || 'top'});
-    };
-    
+
     // pallete colors
     var aaColor = [
       ['#000000', '#424242', '#636363', '#9C9C94', '#CEC6CE', '#EFEFEF', '#F7F7F7', '#FFFFFF'],
@@ -1983,11 +1799,9 @@
 
       var $toolbar = $(sToolbar).prependTo($editor);
       createPalette($toolbar);
-      createTooltip($toolbar, 'bottom');
-      
+
       //05. create Popover
       var $popover = $(sPopover).prependTo($editor);
-      createTooltip($popover);
 
       //06. handle(control selection, ...)
       $(sHandle).prependTo($editor);
@@ -2049,9 +1863,7 @@
           ['para', ['ul', 'ol', 'paragraph']],
           ['height', ['height']],
           ['table', ['table']],
-          ['insert', ['link', 'picture']],
-          ['view', ['fullscreen', 'codeview']],
-          ['help', ['help']]
+          ['insert', ['link', 'picture']]
         ]
       }, options);
 
@@ -2088,11 +1900,7 @@
         if ($holder.length === 0) { return; }
         var info = renderer.layoutInfoFromHolder($holder);
         if (!!(info && info.editable)) {
-          var bCodeview = info.editor.hasClass('codeview');
-          if (agent.bCodeMirror) {
-            info.codable.data('cmEditor').save();
-          }
-          return bCodeview ? info.codable.val() : info.editable.html();
+          return info.editable.html();
         }
         return $holder.html();
       }
@@ -2119,7 +1927,7 @@
       return { dom: dom, list: list, func: func, range: range };
     }
   });
-})(window.jQuery, window.CodeMirror); // jQuery, CodeMirror
+})(window.jQuery); // jQuery
 
 // Array.prototype.reduce fallback
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Reduce
