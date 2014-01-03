@@ -1091,17 +1091,11 @@
   var Dialog = function () {
     this.showImageDialog = function ($dialog, hDropImage, fnInsertImages, fnInsertImage) {
       var $imageDialog = $dialog.find('.note-image-dialog');
-      var $dropzone = $dialog.find('.note-dropzone'),
-          $imageInput = $dialog.find('.note-image-input'),
+      var $imageInput = $dialog.find('.note-image-input'),
           $imageUrl = $dialog.find('.note-image-url'),
           $imageBtn = $dialog.find('.note-image-btn');
 
       $imageDialog.on('shown.bs.modal', function () {
-        $dropzone.on('dragenter dragover dragleave', false);
-        $dropzone.on('drop', function (e) {
-          hDropImage(e);
-          $imageDialog.modal('hide');
-        });
         $imageInput.on('change', function () {
           fnInsertImages(this.files);
           $(this).val('');
@@ -1120,7 +1114,6 @@
           event.preventDefault();
         });
       }).on('hidden.bs.modal', function () {
-        $dropzone.off('dragenter dragover dragleave drop');
         $imageInput.off('change');
         $imageDialog.off('shown.bs.modal hidden.bs.modal');
         $imageUrl.off('keyup');
@@ -1450,9 +1443,6 @@
       oLayoutInfo.editable.on('mousedown', hMousedown);
       oLayoutInfo.editable.on('keyup mouseup', hToolbarAndPopoverUpdate);
       oLayoutInfo.editable.on('scroll', hScroll);
-      //TODO: handle Drag point
-      oLayoutInfo.editable.on('dragenter dragover dragleave', false);
-      oLayoutInfo.editable.on('drop', hDropImage);
 
       oLayoutInfo.handle.on('mousedown', hHandleMousedown);
 
@@ -1666,7 +1656,6 @@
                           '</div>' +
                           '<div class="modal-body">' +
                             '<div class="row-fluid">' +
-                              '<div class="note-dropzone span12">Drag an image here</div>' +
                               '<h5>Select from files</h5>' +
                               '<input class="note-image-input" type="file" name="files" accept="image/*" capture="camera" />' +
                               '<h5>Image URL</h5>' +
